@@ -141,7 +141,35 @@ function run_scan() {
     # 子进程需要重新 source detector.sh 和 config.sh 以获取函数和变量定义
     local scan_func='file="$1"; worker_id="worker_$$_$RANDOM"; out_dir="$2"; source "$3/lib/detector.sh"; source "$3/config.sh"; RULES_DIR="$3/rules"; ENTROPY_THRESHOLD='"$ENTROPY_THRESHOLD"'; MAX_FILE_SIZE='"$MAX_FILE_SIZE"'; SUSPICIOUS_SIZE_MAX='"$SUSPICIOUS_SIZE_MAX"'; SCAN_LEVEL='"$SCAN_LEVEL"'; SCAN_USE_PREFILTER='"$SCAN_USE_PREFILTER"'; detector_scan_file "$file" > "$out_dir/${worker_id}.json" 2>/dev/null'
     
+    # 后台进度监控：每 0.3 秒统计已完成的任务数，实时显示进度条
+    local total=$files_count
+    local progress_pid=""
+    if [ "$total" -gt 0 ] 2>/dev/null; then
+        (
+            while true; do
+                processed=$(find "$worker_dir" -name "worker_*.json" 2>/dev/null | wc -l)
+                pct=$(( processed * 100 / total ))
+                # 构造 20 格进度条
+                filled=$(( pct / 5 ))
+                bar=""
+                for ((i=0; i<filled; i++)); do bar+="█"; done
+                for ((i=filled; i<20; i++)); do bar+="░"; done
+                printf "\r  正在扫描: [%-20s] %d%% (%d/%d)" "$bar" "$pct" "$processed" "$total"
+                [ "$processed" -ge "$total" ] && break
+                sleep 0.3
+            done
+        ) &
+        progress_pid=$!
+    fi
+    
     xargs -0 -P "$max_jobs" -I {} bash -c "$scan_func" _ {} "$worker_dir" "$SCRIPT_DIR" < "$filtered_list"
+    
+    # 关闭进度监控，打印最终 100% 行
+    if [ -n "$progress_pid" ]; then
+        kill "$progress_pid" 2>/dev/null
+        wait "$progress_pid" 2>/dev/null
+        printf "\r  正在扫描: [████████████████████] 100%% (%d/%d)\n" "$total" "$total"
+    fi
     
     # 4. 合并结果
     # 读取 worker_dir 下所有 *.json，合并为单一 JSON 数组，写入 RESULTS_FILE
