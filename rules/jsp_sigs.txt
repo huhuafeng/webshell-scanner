@@ -1,0 +1,34 @@
+# JSP/Java WebShell 特征规则库
+# 格式: 级别|名称|正则表达式|描述
+# 级别: CRITICAL/HIGH/MEDIUM/LOW
+
+# ========== 命令执行 ==========
+CRITICAL|Runtime-exec-param|Runtime\s*\.\s*getRuntime\s*\(\s*\)\s*\.\s*exec\s*\(\s*request\.getParameter|Runtime.exec(request.getParameter) JSP命令执行木马
+CRITICAL|Runtime-exec-req|Runtime\s*\.\s*getRuntime\s*\(\)\s*\.\s*exec\s*\(\s*request|Runtime.exec(request) JSP命令执行木马
+CRITICAL|ProcessBuilder|new\s+ProcessBuilder\s*\(\s*request|ProcessBuilder 命令执行
+CRITICAL|exec-request|\.exec\s*\(\s*request\.getParameter|.exec() 请求参数执行
+HIGH|ScriptEngine-eval|ScriptEngine(?:Manager)?\s*.*\.eval\s*\(\s*request|ScriptEngine.eval JSP脚本引擎执行
+
+# ========== 文件操作 ==========
+HIGH|FileOutputStream-req|new\s+FileOutputStream\s*\(\s*request|FileOutputStream 文件写入
+HIGH|FileWriter-req|new\s+FileWriter\s*\(\s*request|FileWriter 文件写入
+HIGH|FileInputStream-req|new\s+FileInputStream\s*\(\s*request|FileInputStream(request) 文件读取
+HIGH|File-req-method|request\.getParameter\(.*\).*File\s*\(|getParameter+File 可疑文件操作
+
+# ========== 反射/逃避检测 ==========
+HIGH|reflect-invoke|Method\s*\.\s*invoke\s*\(\s*.*,\s*request|反射调用 Method.invoke 可疑
+HIGH|class-forName|Class\s*\.\s*forName\s*\(\s*request|Class.forName 动态类加载
+
+# ========== 编码混淆 ==========
+HIGH|base64-decode-java|Base64\s*\.\s*getDecoder\s*\(\s*\)\s*\.\s*decode|Base64.decode 混淆解码
+HIGH|base64-sun|sun\.misc\.BASE64Decoder|BASE64Decoder 旧版base64解码
+
+# ========== 网络连接 ==========
+MEDIUM|url-connection|URL\w*\s*\(\s*request|URL(request) 可疑远程连接
+MEDIUM|socket-request|new\s+Socket\s*\(\s*request|Socket(request) 可疑网络连接
+MEDIUM|InetAddress|InetAddress\s*\.\s*getByName\s*\(\s*request|InetAddress.getByName 网络操作
+
+# ========== 信息收集 ==========
+MEDIUM|get-all-props|System\s*\.\s*getProperties\s*\(|System.getProperties 服务器信息收集
+MEDIUM|get-env|System\s*\.\s*getenv\s*\(|System.getenv 环境变量收集
+MEDIUM|list-files|listFiles?\s*\(\s*\)\s*\)\s*;|listFiles 目录遍历（可疑上下文）

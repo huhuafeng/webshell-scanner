@@ -1,0 +1,92 @@
+# PHP WebShell 特征规则库
+# 格式: 级别|名称|正则表达式|描述
+# 级别: CRITICAL/HIGH/MEDIUM/LOW
+
+# ========== 经典一句话木马 ==========
+CRITICAL|一句话-eval-shell|eval\s*\(\s*base64_decode\s*\(\s*['\"][A-Za-z0-9+\/=]{100,}['\"]\s*\)\s*\)|eval(base64_decode) 编码执行模式 - 经典一句话
+CRITICAL|一句话-eval-gzinflate|eval\s*\(\s*gzinflate\s*\(\s*base64_decode\s*\(\s*['\"][A-Za-z0-9+\/=]{50,}|eval(gzinflate(base64_decode)) 三层混淆加密木马
+CRITICAL|一句话-eval-str_rot13|eval\s*\(\s*str_rot13\s*\(\s*base64_decode|str_rot13+base64_decode 变种混淆
+CRITICAL|一句话-assert-post|assert\s*\(\s*\$_POST\s*\[|assert($_POST) assert后门
+CRITICAL|一句话-eval-post|eval\s*\(\s*\$_POST\s*\[|eval($_POST) POST参数执行
+CRITICAL|一句话-eval-get|eval\s*\(\s*\$_GET\s*\[|eval($_GET) GET参数执行
+CRITICAL|一句话-eval-request|eval\s*\(\s*\$_REQUEST\s*\[|eval($_REQUEST) 请求参数执行
+CRITICAL|一句话可变函数|\$\w+\s*=\s*\$_GET\[['\"]?\w+['\"]?\]\s*;\s*\$\w+\(|可变函数后门（动态调用）
+CRITICAL|preg_replace-e修饰|preg_replace\s*\(\s*['\"][\/#].*[\/#]e['\"]|preg_replace /e 修饰符代码执行（高危）
+
+# ========== 系统命令执行 ==========
+CRITICAL|system-gat|system\s*\(\s*\$_|system($_ 命令执行
+CRITICAL|system-raw|system\s*\(\s*\$[A-Za-z_]+\s*\)\s*;|system(可变) 动态命令
+CRITICAL|exec-post|exec\s*\(\s*\$_POST|exec($_POST) 命令执行
+CRITICAL|exec-get|exec\s*\(\s*\$_GET\s*\[|exec($_GET) 命令执行
+CRITICAL|shell_exec-post|shell_exec\s*\(\s*\$_POST|shell_exec($_POST)
+CRITICAL|shell_exec-get|shell_exec\s*\(\s*\$_GET|shell_exec($_GET)
+CRITICAL|passthru-post|passthru\s*\(\s*\$_POST|passthru($_POST)
+CRITICAL|passthru-get|passthru\s*\(\s*\$_GET|passthru($_GET)
+CRITICAL|反引号执行|`\s*\$_|`$_[A-Z] 反引号执行
+CRITICAL|proc_open|proc_open\s*\(\s*\$_|proc_open 进程执行
+CRITICAL|popen-gat|popen\s*\(\s*\$_|popen 管道执行
+CRITICAL|pcntl-exec|pcntl_exec\s*\(|pcntl_exec 进程执行
+
+# ========== 文件操作(可疑) ==========
+HIGH|fwrite-http-GET|fwrite\s*\(\s*\$_GET\[|fwrite 写入GET参数内容
+HIGH|fwrite-http-POST|fwrite\s*\(\s*\$_POST\[|fwrite 写入POST参数内容
+HIGH|fwrite-http-REQ|fwrite\s*\(\s*\$_REQUEST\[|fwrite 写入REQUEST参数内容
+HIGH|fwrite-http-COOKIE|fwrite\s*\(\s*\$_COOKIE\[|fwrite 写入COOKIE内容
+HIGH|fwrite-http-SERVER|fwrite\s*\(\s*\$_SERVER\[|fwrite 写入SERVER变量内容
+HIGH|file_put_contents-GET|file_put_contents\s*\(\s*\$_GET\[|file_put_contents 写入GET参数
+HIGH|file_put_contents-POST|file_put_contents\s*\(\s*\$_POST\[|file_put_contents 写入POST参数
+HIGH|file_put_contents-REQ|file_put_contents\s*\(\s*\$_REQUEST\[|file_put_contents 写入REQUEST参数
+HIGH|file_put_contents-SRV|file_put_contents\s*\(\s*\$_SERVER\[|file_put_contents 写入SERVER变量
+HIGH|move_uploaded_file|move_uploaded_file\s*\(\s*\$_FILES|move_uploaded_file 上传文件操作
+HIGH|copy-from-http|copy\s*\(\s*\$_|copy 复制远程/用户文件
+HIGH|chmod-777|chmod\s*\(.*0777|chmod 0777 设置为可执行权限
+
+# ========== 编码混淆载荷 ==========
+HIGH|大量chr拼接|\.\s*chr\(\d{2,3}\)\s*\.\s*chr\(\d{2,3}\)|chr() 字符编码拼接（混淆）
+HIGH|pack编码|eval\(\s*pack\(\s*['\"]H\*|pack('H*') 十六进制编码执行
+HIGH|hex2bin-eval|eval\(\s*hex2bin\(|hex2bin 十六进制解码执行
+HIGH|base64超长字符串|[A-Za-z0-9+\/]{500,}={0,2}|超长base64编码字符串（可疑混淆）
+HIGH|eval可变参数|\$\w+\(\s*\$\w+\[|可变函数间接调用模式
+
+# ========== 文件包含(远程/本地) ==========
+HIGH|include-http|include\s*\(?\s*['\"]https?://|include 远程文件包含
+HIGH|require-http|require\s*\(?\s*['\"]https?://|require 远程文件包含
+HIGH|include-post-GET|include\s*\(?\s*\$_GET|include $_GET动态包含
+HIGH|include-post-POST|include\s*\(?\s*\$_POST|include $_POST动态包含
+HIGH|include-post-REQ|include\s*\(?\s*\$_REQUEST|include $_REQUEST动态包含
+HIGH|include-post-COOKIE|include\s*\(?\s*\$_COOKIE|include $_COOKIE动态包含
+
+# ========== 数据库后门 ==========
+MEDIUM|mysql-query-get|mysql_query\s*\(\s*\$_|mysql_query 动态SQL（可能为后门）
+MEDIUM|mysqli-query-get|mysqli_query\s*\(\s*\$_|mysqli_query 动态SQL
+MEDIUM|pdo-exec|->\s*query\s*\(\s*\$_|PDO->query 动态查询
+
+# ========== 文件操作(较常见) ==========
+MEDIUM|fopen-w|fopen\s*\(.*['\"]w['\"]|fopen 写入模式打开文件
+MEDIUM|flie-get-contents-ext|file_get_contents\s*\(\s*['\"][a-z]+://|file_get_contents 远程文件读取
+MEDIUM|curl-exec|curl_exec\s*\(\s*\$ch?|curl_exec 远程请求
+
+# ========== 信息收集 ==========
+MEDIUM|phpinfo|phpinfo\s*\(\s*\)|phpinfo 信息泄露
+MEDIUM|get-defined-vars|get_defined_vars\s*\(|get_defined_vars 变量泄露
+MEDIUM|get-defined-funcs|get_defined_functions\s*\(|get_defined_functions 函数信息泄露
+
+# ========== 已知WebShell特征 ==========
+CRITICAL|中国菜刀Pass|c[aA][iI][dD][aA][oO]\s*\[|中国菜刀(Caidao)特征
+CRITICAL|一句话菜刀-POST|@eval\s*\(\s*\$_POST\s*\[['\"]?\w+['\"]?\]\s*\)|一句话木马菜刀特征(POST)
+CRITICAL|一句话菜刀-GET|@eval\s*\(\s*\$_GET\s*\[['\"]?\w+['\"]?\]\s*\)|一句话木马菜刀特征(GET)
+CRITICAL|一句话菜刀-REQ|@eval\s*\(\s*\$_REQUEST\s*\[['\"]?\w+['\"]?\]\s*\)|一句话木马菜刀特征(REQUEST)
+CRITICAL|冰蝎特征|<password>[\s\S]*?<password>|冰蝎/Behinder 特征（XML式配置）
+CRITICAL|WSO-webshell|['\"]WSO['\"]|Web Shell by oRb 特征
+CRITICAL|r57shell|['\"]r57shell['\"]|r57shell 特征
+CRITICAL|b374k-shell|['\"]b374k['\"]|b374k webshell 特征
+CRITICAL|AntSword|['\"]ant['\"]?[\s]*?=>|蚁剑/AntSword 特征
+HIGH|eval-GET|eval\s*\(\s*\$_GET\[|eval($_GET[) webshell通用特征
+HIGH|eval-POST|eval\s*\(\s*\$_POST\[|eval($_POST[) webshell通用特征
+HIGH|eval-REQ|eval\s*\(\s*\$_REQUEST\[|eval($_REQUEST[) webshell通用特征
+HIGH|assert-GET|assert\s*\(\s*\$_GET\[|assert($_GET[) webshell通用特征
+HIGH|assert-POST|assert\s*\(\s*\$_POST\[|assert($_POST[) webshell通用特征
+HIGH|assert-REQ|assert\s*\(\s*\$_REQUEST\[|assert($_REQUEST[) webshell通用特征
+HIGH|create-function|create_function\s*\(\s*['\"]['\"]\s*,\s*\$|create_function 动态函数创建
+HIGH|array-map-callback|array_map\s*\(\s*\$_|array_map 回调执行
+HIGH|ob-start-callback|ob_start\s*\(\s*\$_|ob_start 回调执行

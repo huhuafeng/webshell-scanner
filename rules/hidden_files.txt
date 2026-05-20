@@ -1,0 +1,46 @@
+# 可疑文件名/模式
+# 格式: 级别|模式|描述
+# 注意: 模式中不能包含 | 分隔符
+
+HIGH|^\..+\.php$|隐藏PHP文件（点号开头）
+HIGH|^\.\..+\.php$|双点号隐藏文件
+HIGH|^.+\.php\.[a-z]+$|双后缀PHP文件
+HIGH|^.+\.php[0-9]$|数字后缀PHP变种
+HIGH|^.+\.php\.jpg$|图片后缀伪装脚本(.php.jpg)
+HIGH|^.+\.php\.png$|图片后缀伪装脚本(.php.png)
+HIGH|^.+\.php\.gif$|图片后缀伪装脚本(.php.gif)
+HIGH|^.+\.php\.ico$|图片后缀伪装脚本(.php.ico)
+HIGH|^.+\.jpg\.php$|脚本后缀伪装图片(.jpg.php)
+HIGH|^.+\.jpg\.asp$|脚本后缀伪装图片(.jpg.asp)
+HIGH|^.+\.jpg\.jsp$|脚本后缀伪装图片(.jpg.jsp)
+HIGH|^.+\.png\.php$|脚本后缀伪装图片(.png.php)
+HIGH|^.+\.png\.asp$|脚本后缀伪装图片(.png.asp)
+HIGH|^.+\.png\.jsp$|脚本后缀伪装图片(.png.jsp)
+HIGH|^.+\.gif\.php$|脚本后缀伪装图片(.gif.php)
+HIGH|^.+\.gif\.asp$|脚本后缀伪装图片(.gif.asp)
+HIGH|^.+\.gif\.jsp$|脚本后缀伪装图片(.gif.jsp)
+HIGH|^.+\.ico\.php$|脚本后缀伪装图片(.ico.php)
+HIGH|^.+\.ico\.asp$|脚本后缀伪装图片(.ico.asp)
+HIGH|^.+\.ico\.jsp$|脚本后缀伪装图片(.ico.jsp)
+HIGH|^.+\.php;.+$|分号截断伪装文件(.php;)
+HIGH|^.+\.asp;.+$|分号截断伪装文件(.asp;)
+HIGH|^.+\.jsp;.+$|分号截断伪装文件(.jsp;)
+HIGH|^\.\s*\.php$|特殊点号隐藏
+HIGH|^\.php$|纯.php空文件名
+MEDIUM|^\.bash_history$|.bash_history 敏感文件
+MEDIUM|^\.mysql_history$|.mysql_history 敏感文件
+MEDIUM|^\.viminfo$|.viminfo 敏感文件
+MEDIUM|^\.ssh$|.ssh 目录暴露
+MEDIUM|^404\.php$|常见木马文件名: 404.php
+MEDIUM|^error\.php$|常见木马文件名: error.php
+MEDIUM|^test\.php$|常见木马文件名: test.php
+MEDIUM|^admin\.php$|常见木马文件名: admin.php
+MEDIUM|^cmd\.php$|常见木马文件名: cmd.php
+MEDIUM|^shell\.php$|常见木马文件名: shell.php
+MEDIUM|^r57\.|已知webshell: r57
+MEDIUM|^c99\.|已知webshell: c99
+MEDIUM|^b374k\.|已知webshell: b374k
+MEDIUM|^wso\.|已知webshell: wso
+MEDIUM|^webshell\.|已知webshell: webshell
+MEDIUM|^backdoor\.|已知webshell: backdoor
+MEDIUM|^\.htaccess$|.htaccess 文件（检查是否被恶意修改）
