@@ -12,7 +12,8 @@ set -e
 
 # ---------- 基础设置 ----------
 # SCRIPT_DIR: 脚本自身所在目录（用于定位 lib/、rules/、output/ 等子目录）
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# 使用 readlink -f 解析软链接，确保通过 muma-scan 全局命令也能正确定位
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 LIB_DIR="$SCRIPT_DIR/lib"       # 模块库目录
 RULES_DIR="$SCRIPT_DIR/rules"   # 检测规则文件目录
 
