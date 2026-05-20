@@ -12,6 +12,31 @@
 - **隔离机制**：可疑文件自动备份至隔离区，可恢复
 - **性能优化**：预过滤 + 级别过滤 + 增量扫描三级加速
 
+## 一键安装（推荐）
+
+在任何 Linux 服务器上执行以下任一命令即可自动安装并开始使用：
+
+```bash
+# 方案一：curl（推荐）
+curl -sSL https://raw.githubusercontent.com/huhuafeng/webshell-scanner/master/install.sh | sudo bash
+
+# 方案二：wget
+wget -qO- https://raw.githubusercontent.com/huhuafeng/webshell-scanner/master/install.sh | sudo bash
+```
+
+安装完成后，SSH 重新登录或执行 `source ~/.bashrc` 后，可直接使用 `muma-scan` 命令：
+
+```bash
+# 快速扫描
+sudo muma-scan --quick
+
+# 全盘扫描
+sudo muma-scan --full
+
+# 查看报告
+muma-scan --report
+```
+
 ## 环境要求
 
 - Bash 4+
