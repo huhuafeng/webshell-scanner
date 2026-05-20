@@ -1,10 +1,25 @@
 # PHP WebShell 特征规则库
-# 格式: 级别|名称|正则表达式|描述
-# 级别: CRITICAL/HIGH/MEDIUM/LOW
+# ============================================================
+# 格式（竖线分隔，共 4 列）:
+#   级别 | 规则名称 | Perl 兼容正则表达式 | 规则描述
+#
+# 级别含义:
+#   CRITICAL — 几乎确定是木马，需立即处理（如 eval($_POST)）
+#   HIGH     — 高度可疑，需人工确认（如 fwrite($_GET)）
+#   MEDIUM   — 存在风险，需结合上下文判断（如 phpinfo）
+#   LOW      — 低风险/信息性，仅供参考
+#
+# 注意:
+#   - 正则表达式使用 grep -P（Perl 兼容）语法
+#   - 一行一条规则，井号(#)开头的行为注释
+#   - 竖线分隔符两边允许有空白（detector_trim 自动清理）
+#   - 规则按功能分组，每组上方有组标题注释
+# ============================================================
 
 # ========== 经典一句话木马 ==========
 CRITICAL|一句话-eval-shell|eval\s*\(\s*base64_decode\s*\(\s*['\"][A-Za-z0-9+\/=]{100,}['\"]\s*\)\s*\)|eval(base64_decode) 编码执行模式 - 经典一句话
 CRITICAL|一句话-eval-gzinflate|eval\s*\(\s*gzinflate\s*\(\s*base64_decode\s*\(\s*['\"][A-Za-z0-9+\/=]{50,}|eval(gzinflate(base64_decode)) 三层混淆加密木马
+CRITICAL|gzinflate-substr|gzinflate\s*\(\s*substr\(|gzinflate(substr()) 直接gzip压缩载荷内嵌（无base64）
 CRITICAL|一句话-eval-str_rot13|eval\s*\(\s*str_rot13\s*\(\s*base64_decode|str_rot13+base64_decode 变种混淆
 CRITICAL|一句话-assert-post|assert\s*\(\s*\$_POST\s*\[|assert($_POST) assert后门
 CRITICAL|一句话-eval-post|eval\s*\(\s*\$_POST\s*\[|eval($_POST) POST参数执行

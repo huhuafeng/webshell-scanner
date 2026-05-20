@@ -1,2 +1,5 @@
-# 排除实际配置文件（包含密钥），防止密钥误提交
+output/
 target/
+quarantine/
+*.json
+*.html

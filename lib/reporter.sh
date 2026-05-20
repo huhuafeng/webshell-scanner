@@ -1,9 +1,14 @@
 #!/bin/bash
 # ============================================
 # 报告生成器 - 终端/HTML/JSON 输出
+# 功能：读取合并后的 JSON 结果文件，生成三种格式输出：
+#   1. 终端彩色表格（带告警级别颜色标记）
+#   2. HTML 报告（可视化仪表板，含摘要卡片和排序表格）
+#   3. JSON 原始数据（透传检测结果，供外部工具消费）
 # ============================================
 
-# 颜色定义
+# ---------- 颜色定义 ----------
+# 终端输出的 ANSI 颜色转义码，与 scan.sh 中的颜色变量对齐
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 ORANGE='\033[0;33m'
@@ -13,6 +18,9 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 BOLD='\033[1m'
 
+# ---------- 打印启动横幅 ----------
+# reporter_print_banner: 输出扫描器的 ASCII 艺术标题（红色边框）。
+# 参数：无
 function reporter_print_banner() {
     echo ""
     echo -e "${RED}╔══════════════════════════════════════════════╗${NC}"
@@ -21,6 +29,10 @@ function reporter_print_banner() {
     echo ""
 }
 
+# ---------- 告警级别着色 ----------
+# reporter_level_color: 根据级别返回带颜色的级别名称字符串。
+# 参数: $1 — 级别名称 (CRITICAL/HIGH/MEDIUM/LOW)
+# 返回：带 ANSI 转义码的着色字符串
 function reporter_level_color() {
     case "$1" in
         CRITICAL) echo -e "${RED}${BOLD}CRITICAL${NC}" ;;
@@ -31,6 +43,14 @@ function reporter_level_color() {
     esac
 }
 
+# ---------- 终端报告生成 ----------
+# reporter_generate_terminal: 读取 JSON 结果，输出带颜色格式的终端报告。
+# 报告包含：启动横幅 → 扫描基本信息 → 告警摘要统计 → 逐条告警详情。
+# 参数:
+#   $1 - results_file: 合并后的 JSON 结果文件路径
+#   $2 - scan_time: 扫描开始时间（字符串）
+#   $3 - scan_dirs: 扫描路径（字符串，空格分隔）
+#   $4 - files_count: 扫描文件总数（整数）
 function reporter_generate_terminal() {
     local results_file="$1"
     local scan_time="$2"
@@ -45,6 +65,7 @@ function reporter_generate_terminal() {
     echo -e "  扫描文件数: $files_count"
     echo ""
     
+    # 读取结果总数，判断是否有告警
     local count=$(python3 -c "
 import json, sys
 with open('$results_file') as f:
@@ -58,7 +79,7 @@ print(len(data))
         return
     fi
     
-    # Get summary counts
+    # 获取各级别告警数量
     eval "$(python3 -c "
 import json, sys
 with open('$results_file') as f:
@@ -70,6 +91,7 @@ low = sum(1 for x in data if x['level']=='LOW')
 print(f'CRIT={crit};HIGH={high};MED={med};LOW={low};TOTAL={len(data)}')
 " 2>/dev/null)"
     
+    # 输出摘要统计（只有非零的级别才显示）
     echo -e "${CYAN}[扫描结果摘要]${NC}"
     [ "$CRIT" -gt 0 ] && echo -e "  ${RED}${BOLD}严重 (CRITICAL): $CRIT${NC}"
     [ "$HIGH" -gt 0 ] && echo -e "  ${ORANGE}${BOLD}高危 (HIGH):     $HIGH${NC}"
@@ -78,6 +100,7 @@ print(f'CRIT={crit};HIGH={high};MED={med};LOW={low};TOTAL={len(data)}')
     echo -e "  ${BOLD}总计: $TOTAL 条告警${NC}"
     echo ""
     
+    # 输出详细告警列表（按级别排序 → 按文件路径排序 → 按行号排序）
     echo -e "${CYAN}[详细告警列表]${NC}"
     local HOME_DIR="$HOME"
     python3 -c "
@@ -117,6 +140,15 @@ for r in data:
     echo ""
 }
 
+# ---------- HTML 报告生成 ----------
+# reporter_generate_html: 读取 JSON 结果，生成自包含的 HTML 报告页面。
+# 页面包含：渐变色标题区 → 摘要卡片 → 排序表格（含着色级别徽标）。
+# 参数:
+#   $1 - rf: 结果 JSON 文件路径
+#   $2 - of: 输出 HTML 文件路径
+#   $3 - st: 扫描时间（字符串）
+#   $4 - sd: 扫描路径（字符串）
+#   $5 - fc: 扫描文件数（整数）
 function reporter_generate_html() {
     local rf="$1"
     local of="$2"
@@ -127,7 +159,7 @@ function reporter_generate_html() {
     python3 -c "
 import json, html, sys
 
-# Bash variables passed into Python scope
+# 从 bash 传入的变量
 scan_time = '$st'
 scan_dirs_txt = '$sd'
 file_count = '$fc'
@@ -136,15 +168,18 @@ home_dir = '$HOME'
 with open('$rf') as f:
     results = json.load(f)
 
+# 排序：先按级别（CRITICAL 排最前），再按路径和行号
 lvls = {'CRITICAL':0, 'HIGH':1, 'MEDIUM':2, 'LOW':3}
 results.sort(key=lambda x: (lvls.get(x['level'], 99), x['file'], x['line']))
 
+# 统计各级别数量
 crit = sum(1 for x in results if x['level']=='CRITICAL')
 high = sum(1 for x in results if x['level']=='HIGH')
 med = sum(1 for x in results if x['level']=='MEDIUM')
 low = sum(1 for x in results if x['level']=='LOW')
 total = len(results)
 
+# 构建表格行 HTML
 rows = ''
 for r in results:
     f = r['file']
