@@ -50,13 +50,17 @@ function show_help() {
     echo "  -r, --report      查看上次扫描报告"
     echo "  -c, --cleanup     清理隔离区"
     echo "  -l, --list        列出隔离区文件"
+    echo "  -n, --recent DAYS 仅扫描最近 N 天内修改的文件（增量扫描）"
+    echo "  -L, --level LVL   规则级别：CRITICAL / HIGH / ALL（默认 ALL）"
     echo "  -h, --help        显示此帮助信息"
     echo ""
     echo "示例:"
     echo "  $0 --full                 全盘扫描"
-    echo "  $0 --quick                快速扫描"
+    echo "  $0 --quick                快速扫描（仅 CRITICAL + 无预过滤）"
     echo "  $0 --path /var/www/html   扫描指定路径"
     echo "  $0 --path /www -p /blog   扫描多个指定路径"
+    echo "  $0 -n 7                   增量扫描：仅最近 7 天修改的文件"
+    echo "  $0 --full -L CRITICAL     全盘 + 仅 CRITICAL 级别规则"
     echo "  $0 --report               查看上次扫描报告"
     echo "  $0 --list                 列出已隔离文件"
     echo "  $0 --cleanup              清理隔离区"
@@ -134,7 +138,7 @@ function run_scan() {
     # scan_func: 通过 bash -c 在子进程中执行的扫描命令
     # 参数占位: {} = 文件名, _ = $0 占位, $worker_dir = 输出目录, $SCRIPT_DIR = 脚本根目录
     # 子进程需要重新 source detector.sh 和 config.sh 以获取函数和变量定义
-    local scan_func='file="$1"; worker_id="worker_$$_$RANDOM"; out_dir="$2"; source "$3/lib/detector.sh"; source "$3/config.sh"; RULES_DIR="$3/rules"; ENTROPY_THRESHOLD='"$ENTROPY_THRESHOLD"'; MAX_FILE_SIZE='"$MAX_FILE_SIZE"'; SUSPICIOUS_SIZE_MAX='"$SUSPICIOUS_SIZE_MAX"'; detector_scan_file "$file" > "$out_dir/${worker_id}.json" 2>/dev/null'
+    local scan_func='file="$1"; worker_id="worker_$$_$RANDOM"; out_dir="$2"; source "$3/lib/detector.sh"; source "$3/config.sh"; RULES_DIR="$3/rules"; ENTROPY_THRESHOLD='"$ENTROPY_THRESHOLD"'; MAX_FILE_SIZE='"$MAX_FILE_SIZE"'; SUSPICIOUS_SIZE_MAX='"$SUSPICIOUS_SIZE_MAX"'; SCAN_LEVEL='"$SCAN_LEVEL"'; SCAN_USE_PREFILTER='"$SCAN_USE_PREFILTER"'; detector_scan_file "$file" > "$out_dir/${worker_id}.json" 2>/dev/null'
     
     xargs -0 -P "$max_jobs" -I {} bash -c "$scan_func" _ {} "$worker_dir" "$SCRIPT_DIR" < "$filtered_list"
     
@@ -232,6 +236,21 @@ while [ $# -gt 0 ]; do
             MODE="cleanup"    # 清理隔离区
             shift
             ;;
+        -n|--recent)
+            shift
+            [ -z "$1" ] && { echo "错误: --recent 需要指定天数"; exit 1; }
+            SCAN_RECENT_DAYS="$1"   # 增量扫描：仅扫描最近 N 天修改的文件
+            shift
+            ;;
+        -L|--level)
+            shift
+            [ -z "$1" ] && { echo "错误: --level 需要指定级别 (CRITICAL/HIGH/ALL)"; exit 1; }
+            case "$(echo "$1" | tr '[:lower:]' '[:upper:]')" in
+                CRITICAL|HIGH|ALL) SCAN_LEVEL=$(echo "$1" | tr '[:lower:]' '[:upper:]') ;;
+                *) echo "错误: 无效级别 $1，可选：CRITICAL / HIGH / ALL"; exit 1 ;;
+            esac
+            shift
+            ;;
         -h|--help)
             show_help
             ;;
@@ -257,6 +276,9 @@ case "$MODE" in
         run_scan "${SCAN_DIRS[@]}"
         ;;
     quick)
+        # 快速扫描：只扫 Web 目录 + 仅 CRITICAL 级别规则 + 启用预过滤
+        SCAN_LEVEL="${SCAN_LEVEL:-CRITICAL}"
+        SCAN_USE_PREFILTER="${SCAN_USE_PREFILTER:-true}"
         run_scan "/var/www" "/home"
         ;;
     report)

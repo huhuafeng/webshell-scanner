@@ -82,6 +82,26 @@ HTML_REPORT=true
 # JSON_REPORT: 是否生成 JSON 格式报告（默认始终生成）
 JSON_REPORT=true
 
+# ---------- 扫描模式 ----------
+# SCAN_LEVEL: 规则级别过滤，控制检测深度。
+#   "ALL"      — 执行所有规则（CRITICAL + HIGH + MEDIUM + LOW）
+#   "CRITICAL" — 仅执行 CRITICAL 级别规则，最快，适用于快速排查
+#   "HIGH"     — 执行 CRITICAL + HIGH 级别规则
+# 作用：快速扫描时可设为 CRITICAL，将规则从 ~90 条降到 ~20 条
+SCAN_LEVEL="ALL"
+
+# SCAN_RECENT_DAYS: 增量扫描天数，仅扫描最近 N 天修改过的文件。
+#   0 = 不限制（扫描所有文件）
+#   7 = 只扫描最近 7 天修改的文件（适合日常巡检）
+#   30 = 只扫描最近 30 天修改的文件
+SCAN_RECENT_DAYS=0
+
+# SCAN_USE_PREFILTER: 是否启用 grep -F 预过滤。
+#   true  — 先快速检查文件中是否含预过滤关键词，不含则跳过全部正则（推荐）
+#   false — 跳过预过滤，直接跑全部正则规则
+# 预过滤对纯文本大文件效果显著，对已确定有问题的文件可关闭避免漏报
+SCAN_USE_PREFILTER=true
+
 # ---------- 隔离 ----------
 # QUARANTINE_DIR: 隔离目录名（位于 REPORT_DIR 之下），存放被隔离的可疑文件副本
 QUARANTINE_DIR="quarantine"

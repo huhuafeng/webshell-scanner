@@ -41,12 +41,28 @@ function scanner_init() {
         [ -d "$scan_dir" ] || continue          # 目录不存在则跳过
         echo "  [*] Scanning: $scan_dir" >&2
         
-        find "$scan_dir" -maxdepth 10 \         # 最大递归深度 10 层
-            "${skip_conditions[@]}" \           # 跳过系统目录
-            -type f \( "${ext_conditions[@]}" \) \  # 匹配脚本扩展名
-            -size -"${MAX_FILE_SIZE}"c \        # 跳过超大文件
-            -readable \                         # 只处理可读文件
-            -print0 2>/dev/null >> "$temp_file"  # NUL 分隔输出，避免文件名空格问题
+        # 如果设置了 SCAN_RECENT_DAYS，添加 -mtime 限制只扫描最近修改的文件
+        local recency_condition=()
+        if [ "${SCAN_RECENT_DAYS:-0}" -gt 0 ] 2>/dev/null; then
+            recency_condition=(-mtime -"$SCAN_RECENT_DAYS")
+        fi
+        
+        # find 参数说明：
+        #   -maxdepth 10      : 最大递归深度 10 层
+        #   -prune            : 跳过 SKIP_DIRS 中的系统目录
+        #   -type f           : 只找普通文件
+        #   "${ext_cond...}"  : 匹配 SCAN_EXTENSIONS 定义的扩展名
+        #   -mtime -N         : 仅最近 N 天修改（增量扫描，可选）
+        #   -size -${MAX}c    : 跳过超过 MAX_FILE_SIZE 的大文件
+        #   -readable         : 只处理当前用户可读的文件
+        #   -print0           : NUL 分隔输出，避免文件名含空格/换行问题
+        find "$scan_dir" -maxdepth 10 \
+            "${skip_conditions[@]}" \
+            -type f \( "${ext_conditions[@]}" \) \
+            "${recency_condition[@]}" \
+            -size -"${MAX_FILE_SIZE}"c \
+            -readable \
+            -print0 2>/dev/null >> "$temp_file"
     done
 
     echo "$temp_file"   # 返回临时文件路径，由调用方读取和清理

@@ -1,0 +1,45 @@
+# 预过滤关键词库（grep -F 固定字符串匹配）
+# 用于在跑 90+ 条正则前快速排查文件：如果文件不含以下任一关键词，则可跳过全文扫描。
+# 仅收录高频且准确的木马关键词，避免过多误匹配。
+# 一行一个关键词，区分大小写。
+eval(base64_decode
+gzinflate
+base64_decode
+str_rot13
+assert(
+preg_replace(
+create_function(
+array_map(
+call_user_func
+system(
+exec(
+shell_exec(
+passthru(
+popen(
+proc_open(
+pcntl_exec(
+phpinfo(
+file_put_contents(
+move_uploaded_file(
+fwrite(
+fputs(
+curl_exec(
+fsockopen(
+ob_start(
+$_GET[
+$_POST[
+$_REQUEST[
+$_COOKIE[
+$_SERVER[
+@eval(
+@system(
+@exec(
+@assert(
+chr(
+hex2bin(
+pack(
+Runtime.getRuntime(
+ProcessBuilder(
+Class.forName(
+ScriptEngine(
+WScript.Shell
