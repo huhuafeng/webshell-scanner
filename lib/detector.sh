@@ -318,7 +318,10 @@ function detector_scan_file() {
             ;;
     esac
     
-    detector_entropy_check "$file"  # 熵分析
+    # 熵分析（-q 快速模式跳过，熵检测需启动 python3 子进程较慢）
+    if [ "$SCAN_LEVEL" != "CRITICAL" ]; then
+        detector_entropy_check "$file"
+    fi
 }
 
 # -------- 合并结果（由主进程调用）--------

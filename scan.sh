@@ -113,6 +113,7 @@ function run_scan() {
     
     local scan_time=$(date '+%Y-%m-%d %H:%M:%S')       # 人类可读时间
     local scan_timestamp=$(date '+%Y%m%d_%H%M%S')       # 文件名用时间戳
+    local start_epoch=$(date +%s)                        # 开始时间戳（用于统计耗时）
     
     echo -e "${CYAN}${BOLD}🛡️  MUMA SCAN - 网站木马扫描器${NC}"
     echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -239,6 +240,14 @@ EOF
     
     echo -e "  HTML 报告: ${CYAN}$html_output${NC}"
     echo -e "  JSON 报告: ${CYAN}$json_output${NC}"
+    
+    # 统计并显示总执行时间
+    local elapsed=$(( $(date +%s) - start_epoch ))
+    if [ "$elapsed" -ge 60 ]; then
+        echo -e "  ⏱  执行时间: $(( elapsed / 60 ))分$(( elapsed % 60 ))秒"
+    else
+        echo -e "  ⏱  执行时间: ${elapsed}秒"
+    fi
     echo ""
     
     # 8. 清理临时文件
