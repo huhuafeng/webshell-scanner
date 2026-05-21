@@ -54,6 +54,7 @@ function show_help() {
     echo "  -n, --recent DAYS 仅扫描最近 N 天内修改的文件（增量扫描）"
     echo "  -t, --type EXT    指定文件类型（如 php / php,jsp / .php,.asp）"
     echo "  -L, --level LVL   规则级别：CRITICAL / HIGH / ALL（默认 ALL）"
+    echo "  -d, --detail      显示完整告警详情（默认仅显示摘要和报告路径）"
     echo "  -h, --help        显示此帮助信息"
     echo ""
     echo "示例:"
@@ -212,17 +213,29 @@ files_count="$files_count"
 EOF
     
     # 6. 终端报告
-    # 调用 reporter.sh 中的函数，以彩色表格输出告警详情
+    # -d/--detail: 显示完整告警详情列表；否则只输出摘要+报告路径
     echo -e "${CYAN}[4/4] 扫描完成${NC}"
     echo ""
-    reporter_generate_terminal "$RESULTS_FILE" "$scan_time" "${scan_dirs[*]}" "$files_count"
+    if [ "$SHOW_DETAIL" = "true" ]; then
+        reporter_generate_terminal "$RESULTS_FILE" "$scan_time" "${scan_dirs[*]}" "$files_count"
+    else
+        echo -e "  扫描时间: $scan_time"
+        echo -e "  扫描路径: ${scan_dirs[*]}"
+        echo -e "  扫描文件: $files_count"
+        echo -e "  ${YELLOW}⚠️  共 ${RESULTS_CRITICAL:-0} 条告警（严重 ${RESULTS_CRITICAL:-0} / 高危 ${RESULTS_HIGH:-0} / 中危 ${RESULTS_MEDIUM:-0}）${NC}"
+        echo ""
+        echo -e "     详细报告: ${CYAN}$html_output${NC}"
+        echo -e "     JSON 数据: ${CYAN}$json_output${NC}"
+        echo -e "     查看详情: ${CYAN}muma-scan --report${NC}"
+        echo ""
+    fi
     
     # 7. HTML 报告（可选）
     if [ "$HTML_REPORT" = true ]; then
         reporter_generate_html "$RESULTS_FILE" "$html_output" "$scan_time" "${scan_dirs[*]}" "$files_count"
-        echo -e "  HTML 报告: ${CYAN}$html_output${NC}"
     fi
     
+    echo -e "  HTML 报告: ${CYAN}$html_output${NC}"
     echo -e "  JSON 报告: ${CYAN}$json_output${NC}"
     echo ""
     
@@ -289,6 +302,10 @@ while [ $# -gt 0 ]; do
                 CRITICAL|HIGH|ALL) SCAN_LEVEL=$(echo "$1" | tr '[:lower:]' '[:upper:]') ;;
                 *) echo "错误: 无效级别 $1，可选：CRITICAL / HIGH / ALL"; exit 1 ;;
             esac
+            shift
+            ;;
+        -d|--detail)
+            SHOW_DETAIL="true"    # 显示完整的告警详情列表
             shift
             ;;
         -h|--help)

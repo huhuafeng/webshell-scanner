@@ -72,6 +72,7 @@ sudo ./scan.sh --full
 | `-l, --list` | 列出隔离区文件 |
 | `-c, --cleanup` | 清理隔离区 |
 | `-h, --help` | 显示帮助 |
+| `-d, --detail` | 显示完整告警详情（默认仅显示摘要和报告路径） |
 
 ## 使用示例
 
@@ -105,6 +106,15 @@ sudo ./scan.sh --full -L CRITICAL
 
 # 增量 + 指定级别 + 指定类型（灵活组合）
 sudo ./scan.sh -n 7 -L CRITICAL -t php --path /www
+
+# 默认：仅显示摘要和报告路径（结果太多时不刷屏）
+sudo ./scan.sh --full
+
+# 查看完整告警详情
+sudo ./scan.sh --full -d
+
+# 或
+sudo ./scan.sh --full --detail
 
 # 查看上次扫描报告
 ./scan.sh --report
