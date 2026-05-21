@@ -18,8 +18,20 @@ function scanner_init() {
     
     # 动态构建 find 的扩展名条件
     # 输出形如: -name "*.php" -o -name "*.jsp" -o ...
+    # 如设置了 SCAN_TYPES（如 "php,jsp"），则优先使用命令行指定的类型
+    local extensions=()
+    if [ -n "$SCAN_TYPES" ]; then
+        IFS=',' read -ra extensions <<< "$SCAN_TYPES"
+        # 兼容用户带点写法，如 ".php" → "php"
+        for i in "${!extensions[@]}"; do
+            extensions[$i]=$(echo "${extensions[$i]}" | sed 's/^\.//')
+        done
+    else
+        extensions=("${SCAN_EXTENSIONS[@]}")
+    fi
+
     local ext_conditions=()
-    for ext in "${SCAN_EXTENSIONS[@]}"; do
+    for ext in "${extensions[@]}"; do
         if [ ${#ext_conditions[@]} -eq 0 ]; then
             ext_conditions+=(-name "*.$ext")    # 第一个条件，无 -o 前缀
         else

@@ -52,6 +52,7 @@ function show_help() {
     echo "  -c, --cleanup     清理隔离区"
     echo "  -l, --list        列出隔离区文件"
     echo "  -n, --recent DAYS 仅扫描最近 N 天内修改的文件（增量扫描）"
+    echo "  -t, --type EXT    指定文件类型（如 php / php,jsp / .php,.asp）"
     echo "  -L, --level LVL   规则级别：CRITICAL / HIGH / ALL（默认 ALL）"
     echo "  -h, --help        显示此帮助信息"
     echo ""
@@ -59,7 +60,9 @@ function show_help() {
     echo "  $0 --full                 全盘扫描"
     echo "  $0 --quick                快速扫描（仅 CRITICAL + 无预过滤）"
     echo "  $0 --path /var/www/html   扫描指定路径"
-    echo "  $0 --path /www -p /blog   扫描多个指定路径"
+    echo "  $0 -t php                 仅扫描 .php 文件"
+    echo "  $0 -t php,jsp,asp         扫描多种文件类型"
+    echo "  $0 --full -t php          全盘仅扫 .php"
     echo "  $0 -n 7                   增量扫描：仅最近 7 天修改的文件"
     echo "  $0 --full -L CRITICAL     全盘 + 仅 CRITICAL 级别规则"
     echo "  $0 --report               查看上次扫描报告"
@@ -271,6 +274,12 @@ while [ $# -gt 0 ]; do
             shift
             [ -z "$1" ] && { echo "错误: --recent 需要指定天数"; exit 1; }
             SCAN_RECENT_DAYS="$1"   # 增量扫描：仅扫描最近 N 天修改的文件
+            shift
+            ;;
+        -t|--type)
+            shift
+            [ -z "$1" ] && { echo "错误: --type 需要指定文件类型，如 php / php,jsp"; exit 1; }
+            SCAN_TYPES="$1"         # 文件类型过滤，如 "php" / "php,jsp,asp"
             shift
             ;;
         -L|--level)
