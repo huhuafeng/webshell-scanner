@@ -63,7 +63,7 @@ sudo ./scan.sh --full
 | 选项 | 说明 |
 |---|---|
 | `-f, --full` | 全盘扫描（扫描 `config.sh` 中 `SCAN_DIRS` 定义的所有目录） |
-| `-q, --quick` | 快速扫描（仅 `/var/www` 和 `/home`，仅 CRITICAL 级别规则） |
+| `-q, --quick` | 快速模式（仅 CRITICAL 级别规则，可配合 `-p`/`--full` 使用） |
 | `-p, --path DIR` | 指定扫描路径（可重复使用，如 `-p /www -p /blog`） |
 | `-n, --recent DAYS` | 增量扫描，仅扫描最近 N 天修改的文件 |
 | `-t, --type EXT` | 指定文件类型，如 `-t php` / `-t php,jsp,asp` / `-t .php,.jsp` |
@@ -80,8 +80,14 @@ sudo ./scan.sh --full
 # 全盘扫描
 sudo ./scan.sh --full
 
-# 快速扫描 Web 目录（仅 CRITICAL 规则）
+# 快速模式：仅 CRITICAL 规则 + 预过滤
 sudo ./scan.sh --quick
+
+# 快速模式 + 指定目录
+sudo ./scan.sh -q -t php --path /www
+
+# 全盘快速扫描
+sudo ./scan.sh --quick --full
 
 # 扫描指定目录
 sudo ./scan.sh --path /var/www/html

@@ -46,7 +46,7 @@ function show_help() {
     echo ""
     echo "选项:"
     echo "  -f, --full        全盘扫描（默认扫描 SCAN_DIRS 中的所有目录）"
-    echo "  -q, --quick       快速扫描（仅扫描 /var/www 和 /home 中的 Web 目录）"
+    echo "  -q, --quick       快速模式（仅 CRITICAL 级别规则，可配合 -p/--full 使用）"
     echo "  -p, --path DIR    指定扫描路径（可重复使用）"
     echo "  -r, --report      查看上次扫描报告"
     echo "  -c, --cleanup     清理隔离区"
@@ -59,7 +59,9 @@ function show_help() {
     echo ""
     echo "示例:"
     echo "  $0 --full                 全盘扫描"
-    echo "  $0 --quick                快速扫描（仅 CRITICAL + 无预过滤）"
+    echo "  $0 --quick                快速模式（仅 CRITICAL 规则）"
+    echo "  $0 --quick --full         全盘快速扫描"
+    echo "  $0 -q -p /www             快速扫描指定目录"
     echo "  $0 --path /var/www/html   扫描指定路径"
     echo "  $0 -t php                 仅扫描 .php 文件"
     echo "  $0 -t php,jsp,asp         扫描多种文件类型"
@@ -262,7 +264,10 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         -q|--quick)
-            MODE="quick"      # 快速扫描：仅 /var/www 和 /home
+            # 快速模式：仅使用 CRITICAL 级别规则 + 启用预过滤
+            # 不影响扫描路径，可配合 -p 或 --full 使用
+            SCAN_LEVEL="${SCAN_LEVEL:-CRITICAL}"
+            SCAN_USE_PREFILTER="${SCAN_USE_PREFILTER:-true}"
             shift
             ;;
         -p|--path)
@@ -331,12 +336,6 @@ fi
 case "$MODE" in
     full)
         run_scan "${SCAN_DIRS[@]}"
-        ;;
-    quick)
-        # 快速扫描：只扫 Web 目录 + 仅 CRITICAL 级别规则 + 启用预过滤
-        SCAN_LEVEL="${SCAN_LEVEL:-CRITICAL}"
-        SCAN_USE_PREFILTER="${SCAN_USE_PREFILTER:-true}"
-        run_scan "/var/www" "/home"
         ;;
     report)
         show_report
