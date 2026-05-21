@@ -165,9 +165,11 @@ function run_scan() {
     xargs -0 -P "$max_jobs" -I {} bash -c "$scan_func" _ {} "$worker_dir" "$SCRIPT_DIR" < "$filtered_list"
     
     # 关闭进度监控，打印最终 100% 行
+    # 注意: 进度监控可能已自行退出（达到 total 后 break），
+    # kill/wait 对已死进程会返回非零，加 || true 防止 set -e 中断
     if [ -n "$progress_pid" ]; then
-        kill "$progress_pid" 2>/dev/null
-        wait "$progress_pid" 2>/dev/null
+        kill "$progress_pid" 2>/dev/null || true
+        wait "$progress_pid" 2>/dev/null || true
         printf "\r  正在扫描: [████████████████████] 100%% (%d/%d)\n" "$total" "$total"
     fi
     
