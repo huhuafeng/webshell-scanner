@@ -66,6 +66,7 @@ sudo ./scan.sh --full
 | `-q, --quick` | 快速扫描（仅 `/var/www` 和 `/home`，仅 CRITICAL 级别规则） |
 | `-p, --path DIR` | 指定扫描路径（可重复使用，如 `-p /www -p /blog`） |
 | `-n, --recent DAYS` | 增量扫描，仅扫描最近 N 天修改的文件 |
+| `-t, --type EXT` | 指定文件类型，如 `-t php` / `-t php,jsp,asp` / `-t .php,.jsp` |
 | `-L, --level LVL` | 规则级别：`CRITICAL` / `HIGH` / `ALL`（默认 ALL） |
 | `-r, --report` | 查看上次扫描结果 |
 | `-l, --list` | 列出隔离区文件 |
@@ -87,14 +88,23 @@ sudo ./scan.sh --path /var/www/html
 # 多目录扫描
 sudo ./scan.sh --path /www -p /blog -p /forum
 
+# 仅扫描 PHP 文件（不需要改配置文件）
+sudo ./scan.sh -t php --path /var/www/html
+
+# 扫描多种文件类型
+sudo ./scan.sh -t php,jsp,asp --path /www
+
+# 全盘只扫 PHP
+sudo ./scan.sh --full -t php
+
 # 增量扫描：仅最近 7 天修改的文件
 sudo ./scan.sh --full -n 7
 
 # 指定规则级别扫描（适合快速排查）
 sudo ./scan.sh --full -L CRITICAL
 
-# 增量 + 指定级别（最适合日常巡检）
-sudo ./scan.sh --full -n 7 -L CRITICAL
+# 增量 + 指定级别 + 指定类型（灵活组合）
+sudo ./scan.sh -n 7 -L CRITICAL -t php --path /www
 
 # 查看上次扫描报告
 ./scan.sh --report
